@@ -1,24 +1,74 @@
-import logo from './logo.svg';
+import { useEffect, useState } from 'react';
 import './App.css';
+import Die from "./components/Die.js"
+import {nanoid} from "nanoid"
+import Confetti from 'react-confetti'
+
 
 function App() {
+
+
+  const [stateValue, setStateValue] = useState(allNewDice);
+  const [tenzies, setTenzies] = useState(false);
+
+  useEffect(() =>{
+    const allHeld = stateValue.every(n => n.isHeld);
+    const firstOne = stateValue[0].value;
+    const allSameValue = stateValue.every(n => n.value === firstOne);
+    if(allHeld && allSameValue){
+      console.log("You won!");
+      setTenzies(true);
+    }
+    
+  }, [stateValue]);
+  
+  function allNewDice(){
+    const arrayOfIt = [];
+    for( let i = 0; i < 10; i++){
+      arrayOfIt.push(generateNewDie());
+    }
+    return arrayOfIt;
+  }
+  function generateNewDie() {
+    return {
+        value: Math.ceil(Math.random() * 6),
+        isHeld: false,
+        id: nanoid()
+    }
+}
+
+  function NewDiceRoll(){
+    if(!tenzies){
+      setStateValue(n => n.map(die => {
+        return die.isHeld ? die : generateNewDie()
+      }));
+  }else{
+    setTenzies(false);
+    setStateValue(allNewDice());
+  }
+}
+
+
+
+  function holdDice(id){
+    setStateValue(n => n.map(die => {
+      return die.id === id ? {...die, isHeld: !die.isHeld} : die
+    }))
+  }
+  const newState = stateValue.map(die => <Die key={die.id} value={die.value} isHeld={die.isHeld} onHandleClick={() => holdDice(die.id)} />)
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <main>
+        {tenzies && <Confetti />}
+        <h1 className="title">Tenzies</h1>
+            <p className="instructions">Roll until all dice are the same. Click each die to freeze it at its current value between rolls.</p>
+        <div className="dice-container">
+          {newState}
+      </div>
+      <div className='die-roll'>
+        <button onClick={NewDiceRoll} className='roll'>{tenzies? "New game": "Roll"}</button>
+      </div>
+    </main>
   );
 }
 
